@@ -16,10 +16,14 @@ Authenticate with Google Cloud:
 gcloud auth application-default login
 ```
 
-Set your project:
+Set your project (any of these, checked in this order):
 
 ```bash
 export GOOGLE_CLOUD_PROJECT=your-project-id
+# or
+export GCLOUD_PROJECT=your-project-id
+# or
+export ANTHROPIC_VERTEX_PROJECT_ID=your-project-id
 ```
 
 Use the provider:
@@ -33,6 +37,7 @@ pi --provider google-vertex-claude --model claude-sonnet-4-6
 Add to `~/.bashrc` or `~/.zshrc`:
 
 ```bash
+# Set project ID via GOOGLE_CLOUD_PROJECT, GCLOUD_PROJECT, or ANTHROPIC_VERTEX_PROJECT_ID
 piv() {
   GOOGLE_CLOUD_PROJECT=your-project-id \
   pi --provider google-vertex-claude --model claude-sonnet-4-6 "$@"

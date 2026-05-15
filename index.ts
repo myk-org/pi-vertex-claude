@@ -8,7 +8,7 @@
  *   1. Install dependencies: cd ~/.pi/agent/extensions/vertex-claude && npm install
  *   2. Authenticate with Google Cloud: gcloud auth application-default login
  *   3. Set environment variables:
- *      - GOOGLE_CLOUD_PROJECT or GCLOUD_PROJECT: Your GCP project ID
+ *      - GOOGLE_CLOUD_PROJECT, GCLOUD_PROJECT, or ANTHROPIC_VERTEX_PROJECT_ID: Your GCP project ID
  *      - GOOGLE_CLOUD_LOCATION: Region (optional, defaults to us-east5)
  *
  * Usage:
@@ -182,7 +182,7 @@ export function buildModels(): typeof VERTEX_CLAUDE_MODELS {
 // Helper Functions
 // =============================================================================
 
-type ProjectEnvVar = "GOOGLE_CLOUD_PROJECT" | "GCLOUD_PROJECT";
+type ProjectEnvVar = "GOOGLE_CLOUD_PROJECT" | "GCLOUD_PROJECT" | "ANTHROPIC_VERTEX_PROJECT_ID";
 
 const DEFAULT_ADC_PATH = join(homedir(), ".config", "gcloud", "application_default_credentials.json");
 let cachedAdcExists: boolean | null = null;
@@ -194,12 +194,15 @@ function hasAdcCredentials(): boolean {
 	return cachedAdcExists;
 }
 
-function resolveProjectId(): { id: string; envVar: ProjectEnvVar } | undefined {
+export function resolveProjectId(): { id: string; envVar: ProjectEnvVar } | undefined {
 	if (process.env.GOOGLE_CLOUD_PROJECT) {
 		return { id: process.env.GOOGLE_CLOUD_PROJECT, envVar: "GOOGLE_CLOUD_PROJECT" };
 	}
 	if (process.env.GCLOUD_PROJECT) {
 		return { id: process.env.GCLOUD_PROJECT, envVar: "GCLOUD_PROJECT" };
+	}
+	if (process.env.ANTHROPIC_VERTEX_PROJECT_ID) {
+		return { id: process.env.ANTHROPIC_VERTEX_PROJECT_ID, envVar: "ANTHROPIC_VERTEX_PROJECT_ID" };
 	}
 	return undefined;
 }
@@ -420,7 +423,7 @@ export function streamVertexClaude(
 
 			if (!projectInfo) {
 				throw new Error(
-					"Vertex AI requires a project ID. Set GOOGLE_CLOUD_PROJECT or GCLOUD_PROJECT.\n" +
+					"Vertex AI requires a project ID. Set GOOGLE_CLOUD_PROJECT, GCLOUD_PROJECT, or ANTHROPIC_VERTEX_PROJECT_ID.\n" +
 						"Also ensure you've run: gcloud auth application-default login",
 				);
 			}

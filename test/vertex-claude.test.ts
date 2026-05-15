@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock(
 	"@earendil-works/pi-ai",
@@ -19,6 +19,7 @@ let convertMessages: typeof import("../index.js").convertMessages;
 let mapStopReason: typeof import("../index.js").mapStopReason;
 let parseStreamingJson: typeof import("../index.js").parseStreamingJson;
 let buildModels: typeof import("../index.js").buildModels;
+let resolveProjectId: typeof import("../index.js").resolveProjectId;
 
 beforeAll(async () => {
 	const helpers = await import("../index.js");
@@ -26,6 +27,7 @@ beforeAll(async () => {
 	mapStopReason = helpers.mapStopReason;
 	parseStreamingJson = helpers.parseStreamingJson;
 	buildModels = helpers.buildModels;
+	resolveProjectId = helpers.resolveProjectId;
 });
 
 describe("vertex-claude helpers", () => {
@@ -104,6 +106,64 @@ describe("vertex-claude helpers", () => {
 
 		expect(lastBlock.type).toBe("image");
 		expect(lastBlock.cache_control).toEqual({ type: "ephemeral" });
+	});
+
+	describe("resolveProjectId priority", () => {
+		const envVars = ["GOOGLE_CLOUD_PROJECT", "GCLOUD_PROJECT", "ANTHROPIC_VERTEX_PROJECT_ID"] as const;
+		const savedEnv: Record<string, string | undefined> = {};
+
+		function clearProjectEnvVars() {
+			for (const v of envVars) {
+				savedEnv[v] = process.env[v];
+				delete process.env[v];
+			}
+		}
+
+		function restoreProjectEnvVars() {
+			for (const v of envVars) {
+				if (savedEnv[v] !== undefined) {
+					process.env[v] = savedEnv[v];
+				} else {
+					delete process.env[v];
+				}
+			}
+		}
+
+		afterEach(() => restoreProjectEnvVars());
+
+		it("should prefer GOOGLE_CLOUD_PROJECT over others", () => {
+			clearProjectEnvVars();
+			process.env.GOOGLE_CLOUD_PROJECT = "gcp-project";
+			process.env.GCLOUD_PROJECT = "gcloud-project";
+			process.env.ANTHROPIC_VERTEX_PROJECT_ID = "anthropic-project";
+
+			const result = resolveProjectId();
+			expect(result).toEqual({ id: "gcp-project", envVar: "GOOGLE_CLOUD_PROJECT" });
+		});
+
+		it("should fall back to GCLOUD_PROJECT when GOOGLE_CLOUD_PROJECT is not set", () => {
+			clearProjectEnvVars();
+			process.env.GCLOUD_PROJECT = "gcloud-project";
+			process.env.ANTHROPIC_VERTEX_PROJECT_ID = "anthropic-project";
+
+			const result = resolveProjectId();
+			expect(result).toEqual({ id: "gcloud-project", envVar: "GCLOUD_PROJECT" });
+		});
+
+		it("should fall back to ANTHROPIC_VERTEX_PROJECT_ID when others are not set", () => {
+			clearProjectEnvVars();
+			process.env.ANTHROPIC_VERTEX_PROJECT_ID = "anthropic-project";
+
+			const result = resolveProjectId();
+			expect(result).toEqual({ id: "anthropic-project", envVar: "ANTHROPIC_VERTEX_PROJECT_ID" });
+		});
+
+		it("should return undefined when no project env vars are set", () => {
+			clearProjectEnvVars();
+
+			const result = resolveProjectId();
+			expect(result).toBeUndefined();
+		});
 	});
 });
 
