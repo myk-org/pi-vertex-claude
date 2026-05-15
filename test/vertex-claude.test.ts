@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock(
-	"@mariozechner/pi-ai",
+	"@earendil-works/pi-ai",
 	() => ({
 		calculateCost: () => undefined,
 		createAssistantMessageEventStream: () => ({
