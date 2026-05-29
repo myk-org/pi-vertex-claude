@@ -653,7 +653,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerProvider("google-vertex-claude", {
 		baseUrl: `https://${region}-aiplatform.googleapis.com`, // Display URL, SDK handles actual endpoint
-		apiKey: projectInfo.envVar, // Env var for detection
+		apiKey: "$" + projectInfo.envVar, // Env var requires $ prefix for pi 0.77.0+
 		api: "vertex-claude-api", // Custom API identifier
 
 		models: buildModels(),
